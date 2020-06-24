@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 
 final _colorG1 = Color.fromRGBO(255, 173, 78, 1);
@@ -23,11 +26,13 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+    ));
     return MaterialApp(
-      title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        fontFamily: 'Nunito',
       ),
       home: Home(),
       debugShowCheckedModeBanner: false,
@@ -43,12 +48,62 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with TickerProviderStateMixin {
   Animation<double> animation;
   AnimationController animationController;
+  Animation<double> topAnimation;
+  AnimationController topSectionController;
+  Animation<double> animationInputs;
+  AnimationController animationControllerInputs;
+  Animation<double> animationTitleOpacity;
+  AnimationController titleAnimationCtrl;
 
   String _actionBtnText = 'Register';
+  String _title = 'Login';
+  IconData _icon = Icons.arrow_forward;
+
+  bool isForgotVisible = true;
+
+  BuildContext ctx;
 
   @override
   void initState() {
     super.initState();
+
+    // var size = MediaQuery.of(context).size;
+
+    titleAnimationCtrl =
+        AnimationController(duration: Duration(milliseconds: 300), vsync: this);
+    animationTitleOpacity =
+        Tween<double>(begin: 1.0, end: 0.0).animate(CurvedAnimation(
+      parent: titleAnimationCtrl,
+      curve: Curves.easeInCubic,
+    ));
+
+    topSectionController = AnimationController(
+      value: 0.0,
+      duration: Duration(milliseconds: 750),
+      upperBound: 0.5,
+      lowerBound: 0,
+      vsync: this,
+    );
+
+    // topSectionController = AnimationController(
+    //     value: 0.0, vsync: this, duration: Duration(seconds: 1));
+    // topAnimation = Tween<double>(begin: 0, end: 0.5).animate(CurvedAnimation(
+    //   parent: topSectionController,
+    //   curve: Curves.easeInCubic,
+    // ));
+
+    // _controller = AnimationController(
+    //   value: 0.0,
+    //   duration: Duration(milliseconds: 300),
+    //   vsync: this,
+    // );
+    // topSectionController =
+    //     AnimationController(vsync: this, duration: Duration(milliseconds: 300));
+    // topAnimation = Tween<double>(begin: size.width / 6, end: size.width * 0.2)
+    //     .animate(CurvedAnimation(
+    //   parent: animationController,
+    //   curve: Curves.easeInCubic,
+    // ));
 
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
@@ -57,19 +112,51 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       curve: Curves.easeInCubic,
     ));
 
+    animationControllerInputs =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 300));
+
     animationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         Timer(Duration(milliseconds: 150), () {
           if (_actionBtnText == 'Register') {
             setState(() {
               _actionBtnText = 'Login';
+              _title = 'Register';
+              _icon = Icons.check;
             });
           } else {
             setState(() {
               _actionBtnText = 'Register';
+              _title = 'Login';
+              _icon = Icons.arrow_forward;
             });
           }
           animationController.reverse();
+        });
+      }
+    });
+
+    animationControllerInputs.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Timer(Duration(milliseconds: 150), () {
+          // if (_actionBtnText == 'Register') {
+          //   setState(() {
+          //     _actionBtnText = 'Login';
+          //   });
+          // } else {
+          //   setState(() {
+          //     _actionBtnText = 'Register';
+          //   });
+          // }
+
+          animationControllerInputs.reverse();
+        });
+      }
+    });
+    titleAnimationCtrl.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Timer(Duration(milliseconds: 150), () {
+          titleAnimationCtrl.reverse();
         });
       }
     });
@@ -78,6 +165,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   @override
   void dispose() {
     animationController.dispose();
+    topSectionController.dispose();
     super.dispose();
   }
 
@@ -88,8 +176,22 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     //   animationController.forward();
     // }
     // if (animationController.status == AnimationStatus.)
+    setState(() {
+      isForgotVisible = !isForgotVisible;
+    });
+
+    titleAnimationCtrl.forward();
+    animationControllerInputs.forward();
     animationController.forward();
+    if (_actionBtnText == 'Register') {
+      topSectionController.forward();
+    } else {
+      topSectionController.reverse();
+      // animationControllerInputs.reverse();
+    }
   }
+
+  void _switchPage() {}
 
   Widget navButton() {
     return Container(
@@ -151,10 +253,213 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
+  Widget inputContainer(context) {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      child: Stack(
+        overflow: Overflow.visible,
+        children: [
+          Container(
+            height: _title == 'Login' ? 130 : 180,
+            width: MediaQuery.of(context).size.width - 50,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(65.0),
+                bottomRight: Radius.circular(65.0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Color.fromRGBO(208, 209, 217, 0.5),
+                  offset: Offset(0.0, 1.0),
+                  blurRadius: 8.0,
+                  spreadRadius: 0.3,
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.only(left: 16.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Icon(
+                            Feather.user,
+                            color: Color.fromRGBO(203, 207, 218, 1),
+                            size: 18.0,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 16.0,
+                        ),
+                        Text(
+                          'Username',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.w400,
+                            color: Color.fromRGBO(132, 144, 155, 1),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+                Divider(
+                  height: 1,
+                  color: Color.fromRGBO(208, 209, 217, 1),
+                ),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.only(left: 16.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Icon(
+                            Feather.lock,
+                            color: Color.fromRGBO(203, 207, 218, 1),
+                            size: 18.0,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 16.0,
+                        ),
+                        Text(
+                          'Password',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.w400,
+                            color: Color.fromRGBO(132, 144, 155, 1),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+                if (false)
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.only(left: 16.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Icon(
+                              Feather.lock,
+                              color: Color.fromRGBO(203, 207, 218, 1),
+                              size: 18.0,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 16.0,
+                          ),
+                          Text(
+                            'Password',
+                            style: TextStyle(
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.w400,
+                              color: Color.fromRGBO(132, 144, 155, 1),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 35.0,
+            right: 20,
+            child: Container(
+              width: 60.0,
+              height: 60.0,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [_colorBtn1, _colorBtn1, _colorBtn2],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color.fromRGBO(208, 209, 217, 0.7),
+                    offset: Offset(0.0, 5.0),
+                    blurRadius: 10.0,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Material(
+                clipBehavior: Clip.hardEdge,
+                color: Colors.transparent,
+                child: InkWell(
+                  splashColor: Colors.white54,
+                  borderRadius: BorderRadius.circular(30.0),
+                  onTap: _switchPage,
+                  child: Center(
+                    child: Icon(
+                      _icon,
+                      size: 30,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildInputsAndButton(context) {
+    return AnimatedBuilder(
+        animation: animationControllerInputs,
+        child: inputContainer(context),
+        builder: (context, child) {
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: Transform.translate(
+              offset: Offset(animationInputs.value, 0),
+              child: child,
+            ),
+          );
+        });
+  }
+
+  Widget title() {
+    return Text(_title,
+        style: TextStyle(fontSize: 40.0, fontWeight: FontWeight.w600));
+  }
+
+  Widget buildTitle() {
+    return AnimatedBuilder(
+        animation: titleAnimationCtrl,
+        child: title(),
+        builder: (context, child) {
+          return Opacity(
+            opacity: animationTitleOpacity.value,
+            child: child,
+          );
+        });
+  }
+
   Widget _buildTopSection(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    return ClipPath(
-      clipper: TopSectionClipper(),
+    return AnimatedBuilder(
+      animation: topSectionController,
+      builder: (context, child) {
+        return ClipPath(
+            clipper: TopSectionClipper(topSectionController.value),
+            child: child);
+      },
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -180,162 +485,26 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 70.0),
-          child: Text('Login',
-              style: TextStyle(fontSize: 40.0, fontWeight: FontWeight.w600)),
+          child: buildTitle(),
         ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            child: Stack(
-              overflow: Overflow.visible,
-              children: [
-                Container(
-                  height: 130,
-                  width: MediaQuery.of(context).size.width - 50,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(65.0),
-                      bottomRight: Radius.circular(65.0),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        // color: Color.fromRGBO(208, 209, 217, 0.7),
-                        // offset: Offset(1.0, 1.0),
-                        // blurRadius: 10.0,
-                        // spreadRadius: 0.8,
-                        color: Color.fromRGBO(208, 209, 217, 0.5),
-                        offset: Offset(0.0, 1.0),
-                        blurRadius: 8.0,
-                        spreadRadius: 0.3,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: EdgeInsets.only(left: 16.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: Icon(
-                                  Feather.user,
-                                  color: Color.fromRGBO(203, 207, 218, 1),
-                                  size: 18.0,
-                                ),
-                              ),
-                              SizedBox(
-                                width: 16.0,
-                              ),
-                              Text(
-                                'Username',
-                                style: TextStyle(
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color.fromRGBO(132, 144, 155, 1),
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      Divider(
-                        height: 1,
-                        color: Color.fromRGBO(208, 209, 217, 1),
-                      ),
-                      Expanded(
-                        child: Container(
-                          padding: EdgeInsets.only(left: 16.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: Icon(
-                                  Feather.lock,
-                                  color: Color.fromRGBO(203, 207, 218, 1),
-                                  size: 18.0,
-                                ),
-                              ),
-                              SizedBox(
-                                width: 16.0,
-                              ),
-                              Text(
-                                'Password',
-                                style: TextStyle(
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color.fromRGBO(132, 144, 155, 1),
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 35.0,
-                  right: 20,
-                  child: Container(
-                    width: 60.0,
-                    height: 60.0,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [_colorBtn1, _colorBtn1, _colorBtn2],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color.fromRGBO(208, 209, 217, 0.7),
-                          offset: Offset(0.0, 5.0),
-                          blurRadius: 10.0,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      clipBehavior: Clip.hardEdge,
-                      color: Colors.transparent,
-                      child: InkWell(
-                        splashColor: Colors.white54,
-                        borderRadius: BorderRadius.circular(30.0),
-                        onTap: _nextPressed,
-                        child: Center(
-                          child: Icon(
-                            Icons.arrow_forward,
-                            size: 30,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        buildInputsAndButton(context),
         SizedBox(
           height: 25.0,
         ),
         Align(
           alignment: Alignment.centerRight,
           child: Padding(
-            padding: const EdgeInsets.only(right: 30.0),
-            child: Text(
-              'Forgot ?',
-              style: TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w600,
-                color: Color.fromRGBO(203, 207, 218, 1),
+            padding: const EdgeInsets.only(right: 26.0),
+            child: AnimatedOpacity(
+              opacity: isForgotVisible ? 1.0 : 0.0,
+              duration: Duration(milliseconds: 300),
+              child: Text(
+                'Forgot password?',
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w600,
+                  color: Color.fromRGBO(203, 207, 218, 1),
+                ),
               ),
             ),
           ),
@@ -372,6 +541,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // ctx = context;
+    var size = MediaQuery.of(context).size;
+    animationInputs =
+        Tween<double>(begin: 0, end: -size.width).animate(CurvedAnimation(
+      parent: animationControllerInputs,
+      curve: Curves.easeInCubic,
+    ));
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -418,16 +594,28 @@ class BottomSectionClipper extends CustomClipper<Path> {
 }
 
 class TopSectionClipper extends CustomClipper<Path> {
+  double move = 0;
+  double slice = math.pi;
+
+  TopSectionClipper(this.move);
+
   @override
   Path getClip(Size size) {
     Path path = Path();
 
     path.lineTo(0, size.height);
+    // double xCenter = size.width / 6;
+    // double yCenter = 0;
 
-    var ctrlPoint = Offset(size.width / 6, 0);
+    // double xCenter = move;
+    // double yCenter = 0;
+
+    double xCenter =
+        (size.width / 6) + (size.width * 0.6 + 50) * math.sin(move * slice);
+    double yCenter = 0;
+
     var endPoint = Offset(size.width, size.height);
-    path.quadraticBezierTo(
-        ctrlPoint.dx, ctrlPoint.dy, endPoint.dx, endPoint.dy);
+    path.quadraticBezierTo(xCenter, yCenter, endPoint.dx, endPoint.dy);
 
     path.lineTo(size.width, size.height);
     path.lineTo(size.width, 0);
@@ -437,6 +625,6 @@ class TopSectionClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) {
-    return false;
+    return true;
   }
 }
