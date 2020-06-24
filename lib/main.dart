@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 
@@ -16,8 +14,6 @@ final _colorBtn1 = Color.fromRGBO(0, 207, 200, 1);
 final _colorBtn2 = Color.fromRGBO(0, 241, 158, 1);
 
 final _actionBtnColor = Color.fromRGBO(255, 131, 82, 1);
-
-final _stripeHeight = 12.0;
 
 void main() {
   runApp(MyApp());
@@ -46,40 +42,32 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with TickerProviderStateMixin {
-  Animation<double> animation;
-  AnimationController animationController;
-  Animation<double> topAnimation;
-  AnimationController topSectionController;
+  Animation<double> btnAnimation;
+  AnimationController actionBtnCtrl;
+  Animation<double> curveAnimation;
+  AnimationController curveCtrl;
   Animation<double> animationInputs;
   AnimationController animationControllerInputs;
-  Animation<double> animationTitleOpacity;
-  AnimationController titleAnimationCtrl;
+  Animation<double> titleAnimation;
+  AnimationController titleCtrl;
 
   String _actionBtnText = 'Register';
-  String _title = 'Login';
-  IconData _icon = Icons.arrow_forward;
-
-  bool _pageLogin = true;
-
+  String _currentPage = 'Login';
   bool isForgotVisible = true;
-
-  BuildContext ctx;
 
   @override
   void initState() {
     super.initState();
 
-    // var size = MediaQuery.of(context).size;
-
-    titleAnimationCtrl =
+    titleCtrl =
         AnimationController(duration: Duration(milliseconds: 300), vsync: this);
-    animationTitleOpacity =
+    titleAnimation =
         Tween<double>(begin: 1.0, end: 0.0).animate(CurvedAnimation(
-      parent: titleAnimationCtrl,
+      parent: titleCtrl,
       curve: Curves.easeInCubic,
     ));
 
-    topSectionController = AnimationController(
+    curveCtrl = AnimationController(
       value: 0.0,
       duration: Duration(milliseconds: 750),
       upperBound: 0.5,
@@ -87,35 +75,33 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    animationController =
+    actionBtnCtrl =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
-    animation = Tween<double>(begin: 0, end: -120).animate(CurvedAnimation(
-      parent: animationController,
+    btnAnimation = Tween<double>(begin: 0, end: -120).animate(CurvedAnimation(
+      parent: actionBtnCtrl,
       curve: Curves.easeInCubic,
     ));
 
     animationControllerInputs =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
 
-    animationController.addStatusListener((status) {
+    actionBtnCtrl.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         Timer(Duration(milliseconds: 150), () {
           if (_actionBtnText == 'Register') {
             setState(() {
               _actionBtnText = 'Login';
-              _title = 'Register';
-              _icon = Icons.check;
+              _currentPage = 'Register';
             });
           } else {
             setState(() {
               _actionBtnText = 'Register';
-              _title = 'Login';
-              _icon = Icons.arrow_forward;
+              _currentPage = 'Login';
             });
           }
-          animationController.reverse();
+          actionBtnCtrl.reverse();
           animationControllerInputs.reverse();
-          titleAnimationCtrl.reverse();
+          titleCtrl.reverse();
         });
       }
     });
@@ -123,33 +109,34 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    animationController.dispose();
-    topSectionController.dispose();
+    actionBtnCtrl.dispose();
+    curveCtrl.dispose();
     animationControllerInputs.dispose();
-    titleAnimationCtrl.dispose();
+    titleCtrl.dispose();
     super.dispose();
   }
 
-  void _nextPressed() {
+  void _switchPage() {
+    // Forgot password animation
     var dur = isForgotVisible ? 0 : 500;
-
     Timer(Duration(milliseconds: dur), () {
       setState(() {
         isForgotVisible = !isForgotVisible;
       });
     });
 
-    titleAnimationCtrl.forward();
+    // other animations
+    titleCtrl.forward();
     animationControllerInputs.forward();
-    animationController.forward();
+    actionBtnCtrl.forward();
+
+    // top/bottom sections animation
     if (_actionBtnText == 'Register') {
-      topSectionController.forward();
+      curveCtrl.forward();
     } else {
-      topSectionController.reverse();
+      curveCtrl.reverse();
     }
   }
-
-  void _switchPage() {}
 
   Widget navButton() {
     return Container(
@@ -179,7 +166,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             topRight: Radius.circular(30.0),
             bottomRight: Radius.circular(30.0),
           ),
-          onTap: _nextPressed,
+          onTap: _switchPage,
           child: Center(
             child: Text(
               _actionBtnText,
@@ -197,13 +184,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   Widget buildNavButton() {
     return AnimatedBuilder(
-      animation: animationController,
+      animation: actionBtnCtrl,
       child: navButton(),
       builder: (context, child) {
         return Align(
           alignment: Alignment.centerLeft,
           child: Transform.translate(
-            offset: Offset(animation.value, 0),
+            offset: Offset(btnAnimation.value, 0),
             child: child,
           ),
         );
@@ -218,7 +205,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         overflow: Overflow.visible,
         children: [
           Container(
-            height: _title == 'Login' ? 130 : 180,
+            height: _currentPage == 'Login' ? 130 : 180,
             width: MediaQuery.of(context).size.width - 50,
             decoration: BoxDecoration(
               color: Colors.white,
@@ -299,12 +286,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                if (_title == 'Register')
+                if (_currentPage == 'Register')
                   Divider(
                     height: 1,
                     color: Color.fromRGBO(208, 209, 217, 1),
                   ),
-                if (_title == 'Register')
+                if (_currentPage == 'Register')
                   Expanded(
                     child: Container(
                       padding: EdgeInsets.only(left: 16.0),
@@ -338,7 +325,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             ),
           ),
           Positioned(
-            top: _title == 'Login' ? 35.0 : 60.0,
+            top: _currentPage == 'Login' ? 35.0 : 60.0,
             right: 20,
             child: Container(
               width: 60.0,
@@ -365,10 +352,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                 child: InkWell(
                   splashColor: Colors.white54,
                   borderRadius: BorderRadius.circular(30.0),
-                  onTap: _switchPage,
+                  onTap: () {},
                   child: Center(
                     child: Icon(
-                      _icon,
+                      _currentPage == 'Login'
+                          ? Icons.arrow_forward
+                          : Icons.check,
                       size: 30,
                       color: Colors.white,
                     ),
@@ -377,7 +366,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               ),
             ),
           ),
-          if (_title == 'Login')
+          if (_currentPage == 'Login')
             Positioned(
               right: 40,
               bottom: -50,
@@ -411,17 +400,17 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   }
 
   Widget title() {
-    return Text(_title,
+    return Text(_currentPage,
         style: TextStyle(fontSize: 40.0, fontWeight: FontWeight.w700));
   }
 
   Widget buildTitle() {
     return AnimatedBuilder(
-        animation: titleAnimationCtrl,
+        animation: titleCtrl,
         child: title(),
         builder: (context, child) {
           return Opacity(
-            opacity: animationTitleOpacity.value,
+            opacity: titleAnimation.value,
             child: child,
           );
         });
@@ -430,11 +419,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   Widget _buildTopSection(BuildContext context) {
     var size = MediaQuery.of(context).size;
     return AnimatedBuilder(
-      animation: topSectionController,
+      animation: curveCtrl,
       builder: (context, child) {
         return ClipPath(
-            clipper: TopSectionClipper(topSectionController.value),
-            child: child);
+            clipper: TopSectionClipper(curveCtrl.value), child: child);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -468,11 +456,10 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   Widget _buildBottomSection(BuildContext context) {
     var size = MediaQuery.of(context).size;
     return AnimatedBuilder(
-      animation: topSectionController,
+      animation: curveCtrl,
       builder: (context, child) {
         return ClipPath(
-            clipper: BottomSectionClipper(topSectionController.value),
-            child: child);
+            clipper: BottomSectionClipper(curveCtrl.value), child: child);
       },
       child: Container(
         decoration: BoxDecoration(
