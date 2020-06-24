@@ -59,6 +59,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   String _title = 'Login';
   IconData _icon = Icons.arrow_forward;
 
+  bool _pageLogin = true;
+
   bool isForgotVisible = true;
 
   BuildContext ctx;
@@ -84,26 +86,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       lowerBound: 0,
       vsync: this,
     );
-
-    // topSectionController = AnimationController(
-    //     value: 0.0, vsync: this, duration: Duration(seconds: 1));
-    // topAnimation = Tween<double>(begin: 0, end: 0.5).animate(CurvedAnimation(
-    //   parent: topSectionController,
-    //   curve: Curves.easeInCubic,
-    // ));
-
-    // _controller = AnimationController(
-    //   value: 0.0,
-    //   duration: Duration(milliseconds: 300),
-    //   vsync: this,
-    // );
-    // topSectionController =
-    //     AnimationController(vsync: this, duration: Duration(milliseconds: 300));
-    // topAnimation = Tween<double>(begin: size.width / 6, end: size.width * 0.2)
-    //     .animate(CurvedAnimation(
-    //   parent: animationController,
-    //   curve: Curves.easeInCubic,
-    // ));
 
     animationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
@@ -132,30 +114,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             });
           }
           animationController.reverse();
-        });
-      }
-    });
-
-    animationControllerInputs.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        Timer(Duration(milliseconds: 150), () {
-          // if (_actionBtnText == 'Register') {
-          //   setState(() {
-          //     _actionBtnText = 'Login';
-          //   });
-          // } else {
-          //   setState(() {
-          //     _actionBtnText = 'Register';
-          //   });
-          // }
-
           animationControllerInputs.reverse();
-        });
-      }
-    });
-    titleAnimationCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        Timer(Duration(milliseconds: 150), () {
           titleAnimationCtrl.reverse();
         });
       }
@@ -166,18 +125,18 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
   void dispose() {
     animationController.dispose();
     topSectionController.dispose();
+    animationControllerInputs.dispose();
+    titleAnimationCtrl.dispose();
     super.dispose();
   }
 
   void _nextPressed() {
-    // if (animationController.status == AnimationStatus.completed) {
-    //   animationController.reverse();
-    // } else {
-    //   animationController.forward();
-    // }
-    // if (animationController.status == AnimationStatus.)
-    setState(() {
-      isForgotVisible = !isForgotVisible;
+    var dur = isForgotVisible ? 0 : 500;
+
+    Timer(Duration(milliseconds: dur), () {
+      setState(() {
+        isForgotVisible = !isForgotVisible;
+      });
     });
 
     titleAnimationCtrl.forward();
@@ -187,7 +146,6 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       topSectionController.forward();
     } else {
       topSectionController.reverse();
-      // animationControllerInputs.reverse();
     }
   }
 
@@ -341,7 +299,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                if (false)
+                if (_title == 'Register')
+                  Divider(
+                    height: 1,
+                    color: Color.fromRGBO(208, 209, 217, 1),
+                  ),
+                if (_title == 'Register')
                   Expanded(
                     child: Container(
                       padding: EdgeInsets.only(left: 16.0),
@@ -351,7 +314,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Icon(
-                              Feather.lock,
+                              Feather.at_sign,
                               color: Color.fromRGBO(203, 207, 218, 1),
                               size: 18.0,
                             ),
@@ -360,7 +323,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             width: 16.0,
                           ),
                           Text(
-                            'Password',
+                            'Email',
                             style: TextStyle(
                               fontSize: 18.0,
                               fontWeight: FontWeight.w400,
@@ -375,7 +338,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             ),
           ),
           Positioned(
-            top: 35.0,
+            top: _title == 'Login' ? 35.0 : 60.0,
             right: 20,
             child: Container(
               width: 60.0,
@@ -414,6 +377,19 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               ),
             ),
           ),
+          if (_title == 'Login')
+            Positioned(
+              right: 40,
+              bottom: -50,
+              child: Text(
+                'Forgot password?',
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w600,
+                  color: Color.fromRGBO(203, 207, 218, 1),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -436,7 +412,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 
   Widget title() {
     return Text(_title,
-        style: TextStyle(fontSize: 40.0, fontWeight: FontWeight.w600));
+        style: TextStyle(fontSize: 40.0, fontWeight: FontWeight.w700));
   }
 
   Widget buildTitle() {
@@ -470,57 +446,34 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         ),
         height: size.height / 4,
         alignment: Alignment.bottomCenter,
-        // child: Container(
-        //   height: _stripeHeight,
-        //   color: Color.fromRGBO(255, 255, 255, 0.6),
-        // ),
       ),
     );
   }
 
   Widget _buildCenterSection(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 70.0),
-          child: buildTitle(),
-        ),
-        buildInputsAndButton(context),
-        SizedBox(
-          height: 25.0,
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 26.0),
-            child: AnimatedOpacity(
-              opacity: isForgotVisible ? 1.0 : 0.0,
-              duration: Duration(milliseconds: 300),
-              child: Text(
-                'Forgot password?',
-                style: TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w600,
-                  color: Color.fromRGBO(203, 207, 218, 1),
-                ),
-              ),
-            ),
+    return Container(
+      height: MediaQuery.of(context).size.height / 2,
+      child: Column(
+        children: [
+          buildTitle(),
+          Expanded(
+            child: buildInputsAndButton(context),
           ),
-        ),
-        SizedBox(
-          height: 40.0,
-        ),
-        buildNavButton(),
-      ],
+          buildNavButton(),
+        ],
+      ),
     );
   }
 
   Widget _buildBottomSection(BuildContext context) {
     var size = MediaQuery.of(context).size;
-    return ClipPath(
-      clipper: BottomSectionClipper(),
+    return AnimatedBuilder(
+      animation: topSectionController,
+      builder: (context, child) {
+        return ClipPath(
+            clipper: BottomSectionClipper(topSectionController.value),
+            child: child);
+      },
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -531,17 +484,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         ),
         height: size.height / 4,
         alignment: Alignment.topCenter,
-        // child: Container(
-        //   height: _stripeHeight,
-        //   color: Color.fromRGBO(255, 255, 255, 0.6),
-        // ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ctx = context;
     var size = MediaQuery.of(context).size;
     animationInputs =
         Tween<double>(begin: 0, end: -size.width).animate(CurvedAnimation(
@@ -554,9 +502,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
         top: false,
         bottom: false,
         child: Container(
-          height: MediaQuery.of(context).size.height,
+          height: size.height,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               _buildTopSection(context),
               _buildCenterSection(context),
@@ -570,16 +517,21 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
 }
 
 class BottomSectionClipper extends CustomClipper<Path> {
+  double move = 0;
+  double slice = math.pi;
+
+  BottomSectionClipper(this.move);
+
   @override
   Path getClip(Size size) {
     Path path = Path();
 
     path.moveTo(0, size.height / 1.5);
-
-    var ctrlPoint = Offset(size.width, size.height);
+    double xCtrlPoint = size.width * math.sin(move * slice);
+    double yCtrlPoint = size.height * 0.8 + 69 * math.cos(move * slice);
+    ;
     var endPoint = Offset(size.width, 0);
-    path.quadraticBezierTo(
-        ctrlPoint.dx, ctrlPoint.dy, endPoint.dx, endPoint.dy);
+    path.quadraticBezierTo(xCtrlPoint, yCtrlPoint, endPoint.dx, endPoint.dy);
 
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
@@ -589,7 +541,7 @@ class BottomSectionClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) {
-    return false;
+    return true;
   }
 }
 
@@ -604,12 +556,6 @@ class TopSectionClipper extends CustomClipper<Path> {
     Path path = Path();
 
     path.lineTo(0, size.height);
-    // double xCenter = size.width / 6;
-    // double yCenter = 0;
-
-    // double xCenter = move;
-    // double yCenter = 0;
-
     double xCenter =
         (size.width / 6) + (size.width * 0.6 + 50) * math.sin(move * slice);
     double yCenter = 0;
